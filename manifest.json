@@ -1,0 +1,35 @@
+{
+    "widget":{
+        "name": "widget.name",
+        "description": "widget.description",
+        "short_description": "widget.short_description",
+        "code": "last_task",
+        "secret_key": "ae96a6457d950e8da9ae0ac941bdb03d541adbd6d46ddd4f18ad03a8d736fe6c",
+        "version": "1.0.33",
+        "interface_version": 2,
+        "init_once": false,
+        "locale":[
+            "ru"
+        ],
+        "installation": true,
+        "support": {
+            "link": "https://www.amocrm.com",
+            "email": "ziablikl@mail.ru"
+        }
+    },
+    "locations":[
+        "settings",
+        "everywhere",
+        "advanced_settings"
+    ],
+    "settings":{
+         "login":{
+             "name": "settings.login",
+             "type": "text",
+             "required": false
+         }
+    },
+    "advanced":{
+        "title": "advanced.title"
+    }
+}
