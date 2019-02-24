@@ -4,8 +4,8 @@
         "description": "widget.description",
         "short_description": "widget.short_description",
         "code": "last_task",
-        "secret_key": "ae96a6457d950e8da9ae0ac941bdb03d541adbd6d46ddd4f18ad03a8d736fe6c",
-        "version": "1.0.33",
+        "secret_key": "537622e128a9db0ee232559430bb1318247a35838af919abcbbd3f9aebcf2c3b",
+        "version": "1.0.1",
         "interface_version": 2,
         "init_once": false,
         "locale":[

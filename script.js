@@ -29,7 +29,7 @@ define(['jquery'], function($){
 
             $.post('https://new5c608a588697c.amocrm.ru/ajax/widgets/edit', {
                     action: 'edit',
-                    id: '344938',
+                    id: '345742',
                     code: 'last_task',
                     widget_active: 'Y',
                     settings: data
@@ -43,7 +43,7 @@ define(['jquery'], function($){
             delete data[codeFiled];
             $.post('https://new5c608a588697c.amocrm.ru/ajax/widgets/edit', {
                 action: 'edit',
-                id: '344938',
+                id: '345742',
                 code: 'last_task',
                 widget_active: 'Y',
                 settings: data
@@ -90,14 +90,14 @@ define(['jquery'], function($){
                     {
                         id: 'buttonSaveFormul'   //указание id
                     }));
-                $('span.button-input-inner').append('Создать формулу');
+                $('#buttonSaveFormul span').append('Создать формулу');
                 $('#buttonSaveFormul').css('background', '#4c8bf7').css('color', '#fff');
 
                 $('#buttonSaveFormul').on('click', function () {
                     if(self.validateFormul($('#formulField').val(), fieldsNames, $('.control--select--button-inner').text())){
 					    alert('Сохранено');
                         $('#formulField').css('border', '1px solid rgb(0,255,0)');
-					    self.set_settings($('.control--select--button').attr('data-value'), $('#formulField').val())
+					    self.set_settings($('.control--select--button span').text(), $('#formulField').val())
                     }
                     else{
 					    alert("Не правильное оформление");
@@ -110,23 +110,97 @@ define(['jquery'], function($){
     	//Функция отрисовывает все существующие формулы на странице расширненных настроек
         this.getFormuls = function () {
             var formuls = self.get_settings();
-            console.log(formuls);
+            // console.log(formuls);
             for(key in formuls){
                 if(key != 'login'){
-                    $('#work-area-last_task').append('<div id="'+ key +'">'+ key +'='+ formuls[key] +'</div>');
-                    $('#'+key).append(self.render(
-                        {ref: '/tmpl/controls/button.twig'},// объект data в данном случае содержит только ссылку на шаблон
-                        {
-                            id: 'buttonDeleteFormul' + key   //указание id
-                        }));
-                    $('#buttonDeleteFormul' + key + ' span').append('Удалить');
-                    $('#buttonDeleteFormul' + key).css('background', 'rgb(240,0,0)').css('color', '#fff');
+                    $('#work-area-last_task').append('<div class="control" id="formul-info">'+ key +'='+ formuls[key] +'</div>');
                 }
             }
-            $('[id^="buttonDeleteFormul"]').on('click', function () {
-                alert('Удалено');
-                self.delete_settings($(this).attr('id').slice(-6))
+            $('div#formul-info').each(function () {
+               $(this).append(self.render(
+                   {ref: '/tmpl/controls/button.twig'},// объект data в данном случае содержит только ссылку на шаблон
+                   {
+                       id: 'buttonDeleteFormul'   //указание id
+                   }));
+               $(this).find('button').css('background', 'rgb(240,0,0)').css('color', '#fff');
+               $(this).find('span').append('Удалить формулу');
+               $(this).find('button').on('click', function () {
+                    alert('Удалено');
+                    // self.delete_settings($(this).attr('id').slice(-6))
+                })
             })
+        };
+
+        //Расчет по формуле
+        this.calculation = function (arrFormuls) {
+            for(i = 0; i<arrFormuls.length; i++){
+                // console.log(arrFormuls[i]);
+                var formul = '';
+                for(j=1; j<arrFormuls[i].length; j++){
+                    formul = formul + arrFormuls[i][j];
+                }
+                console.log(arrFormuls[i][0]);
+                $('[name="CFV['+ arrFormuls[i][0] +']"]').val(eval(formul));
+            }
+        };
+
+        //Формирование формулы
+        //Замена имен полей в формуле на id полей а затем замена на value поля по id
+        this.convertFormul = function () {
+            var formuls = self.get_settings(),
+                formul,
+                arrFormuls = [];
+            delete formuls['login'];
+            // console.log(formuls);
+            for(formul in formuls){
+                var arrFormul = self.parseFormul(formuls[formul]);
+                for(i=0; i<arrFormul.length; i++){
+                    if(arrFormul[i].length > 1){
+                        arrFormul[i] = self.convertFieldName(arrFormul[i]);
+                        if(arrFormul[i] == 'lead_card_budget'){
+                            // console.log(arrFormul[i],$('#'+arrFormul[i]).val());
+                            arrFormul[i] = $('#'+arrFormul[i]).val().replace(/\s/g, '');
+                        }
+                        else{
+                            // console.log(arrFormul[i], $('[name="CFV['+ arrFormul[i] +']"]').val());
+                            arrFormul[i] = $('[name="CFV['+ arrFormul[i] +']"]').val();
+                        }
+                    }
+                }
+                // console.log(formul);
+                // console.log(self.convertFieldName(formul));
+                arrFormul.unshift(self.convertFieldName(formul));
+                // console.log(arrFormul);
+                arrFormuls.push(arrFormul);
+            }
+            // console.log(arrFormuls);
+            return arrFormuls;
+        };
+
+        //Конвертировать имя поля на id поля
+        this.convertFieldName = function (fieldName) {
+            // console.log(fieldName);
+            var fields,
+                field;
+            $.ajax({
+                type:'GET',
+                async: false,
+                url: 'https://new5c608a588697c.amocrm.ru/api/v2/account?with=custom_fields',
+                success: function (data) {
+                    fields = data._embedded.custom_fields.leads;
+                }
+            });
+            // console.log(fields);
+            for(field in fields){
+                if(fieldName == 'Бюджет'){
+                    // console.log('lead_card_budget', fieldName);
+                    return 'lead_card_budget'
+                }
+                if(fieldName == fields[field].name){
+                    // console.log(field, fieldName);
+                    return field;
+                }
+            }
         };
 
     	//Валидация формулы, mainField не должен повторяться в тексте формулы, все поля используемые в формуле должны существовать
@@ -201,12 +275,19 @@ define(['jquery'], function($){
 			},
 			bind_actions: function(){
 			    console.log('bind_action');
+			    if(self.system().area == 'lcard'){
+                    self.calculation(self.convertFormul());
+                    $('.card-entity-form__fields').each(function () {
+                        $(this).find('input').on('focusout', function () {
+                            self.calculation(self.convertFormul());
+                        })
+                    })
+                }
 				return true;
 			},
             advancedSettings: function()
 			{
 			    console.log('advanced');
-			    self.set_settings('login','Ziaboss');
                 self.getFieldsNames();
                 self.getFormuls();
             },
