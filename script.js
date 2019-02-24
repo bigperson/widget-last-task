@@ -110,12 +110,20 @@ define(['jquery'], function($){
     	//Функция отрисовывает все существующие формулы на странице расширненных настроек
         this.getFormuls = function () {
             var formuls = self.get_settings();
-            // console.log(formuls);
             for(key in formuls){
                 if(key != 'login'){
-                    $('#work-area-last_task').append('<div class="control" id="formul-info">'+ key +'='+ formuls[key] +'</div>');
+                    $('#work-area-last_task').append('<div>' +
+                        '<a href="" class="spoiler_links">Спойлер</a>' +
+                        '<div class="control" id="formul-info">'+ key +'='+ formuls[key] +'</div>' +
+                        '</div>');
                 }
             }
+            $("div#formul-info").hide('normal');
+            $('.spoiler_links').on('click', function(){
+                $("div#formul-info").hide('normal');
+                $(this).parent().children('div#formul-info').toggle('normal');
+                return false;
+            });
             $('div#formul-info').each(function () {
                $(this).append(self.render(
                    {ref: '/tmpl/controls/button.twig'},// объект data в данном случае содержит только ссылку на шаблон
@@ -124,20 +132,21 @@ define(['jquery'], function($){
                    }));
                $(this).find('button').css('background', 'rgb(240,0,0)').css('color', '#fff');
                $(this).find('span').append('Удалить формулу');
-               $(this).find('button').on('click', function () {
-                   var mainField = $(this).parent().html(),
-                       codeField = '';
-                   for(i=0; i<mainField.length; i++){
-                       if(mainField[i] != '='){
-                           codeField = codeField + mainField[i]
-                       }
-                       if(mainField[i] == '='){
-                           break;
-                       }
+               var mainField = $(this).html(),
+                   codeField = '';
+               for(i=0; i<mainField.length; i++){
+                   if(mainField[i] != '='){
+                       codeField = codeField + mainField[i]
                    }
-                   console.log(codeField);
+                   if(mainField[i] == '='){
+                       break;
+                   }
+               }
+               $(this).parent().find('a').text(codeField);
+               $(this).find('button').on('click', function () {
                    if(confirm('Вы уверены, что хотите удалить формулу?')){
                        self.delete_settings(codeField);
+                       $(this).parent().parent().detach();
                        alert('Формула удалена');
                    }
                 })
@@ -152,7 +161,6 @@ define(['jquery'], function($){
                 for(j=1; j<arrFormuls[i].length; j++){
                     formul = formul + arrFormuls[i][j];
                 }
-                // console.log(formul);
                 try {
                     $('[name="CFV['+ arrFormuls[i][0] +']"]').val(eval(formul));
                 } catch (err) {
@@ -168,29 +176,22 @@ define(['jquery'], function($){
                 formul,
                 arrFormuls = [];
             delete formuls['login'];
-            // console.log(formuls);
             for(formul in formuls){
                 var arrFormul = self.parseFormul(formuls[formul]);
                 for(i=0; i<arrFormul.length; i++){
                     if(arrFormul[i].length > 1){
                         arrFormul[i] = self.convertFieldName(arrFormul[i]);
                         if(arrFormul[i] == 'lead_card_budget'){
-                            // console.log(arrFormul[i],$('#'+arrFormul[i]).val());
                             arrFormul[i] = $('#'+arrFormul[i]).val().replace(/\s/g, '');
                         }
                         else{
-                            // console.log(arrFormul[i], $('[name="CFV['+ arrFormul[i] +']"]').val());
                             arrFormul[i] = $('[name="CFV['+ arrFormul[i] +']"]').val();
                         }
                     }
                 }
-                // console.log(formul);
-                // console.log(self.convertFieldName(formul));
                 arrFormul.unshift(self.convertFieldName(formul));
-                // console.log(arrFormul);
                 arrFormuls.push(arrFormul);
             }
-            // console.log(arrFormuls);
             return arrFormuls;
         };
 
@@ -207,14 +208,11 @@ define(['jquery'], function($){
                     fields = data._embedded.custom_fields.leads;
                 }
             });
-            // console.log(fields);
             for(field in fields){
                 if(fieldName == 'Бюджет'){
-                    // console.log('lead_card_budget', fieldName);
                     return 'lead_card_budget'
                 }
                 if(fieldName == fields[field].name){
-                    // console.log(field, fieldName);
                     return field;
                 }
             }
@@ -223,9 +221,7 @@ define(['jquery'], function($){
     	//Валидация формулы, mainField не должен повторяться в тексте формулы, все поля используемые в формуле должны существовать
     	this.validateFormul = function (formul, fieldsNames, mainField) {
     		// console.log(formul, fieldsNames, mainField);
-    		var arrFormul = self.parseFormul(formul),
-                checkFieldIs = false;
-    		// console.log(arrFormul);
+    		var arrFormul = self.parseFormul(formul);
     		if(!arrFormul){
     		    return false
             }
