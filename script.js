@@ -174,13 +174,15 @@ define(['jquery'], function($){
         this.convertFormul = function () {
             var formuls = self.get_settings(),
                 formul,
-                arrFormuls = [];
+                arrFormuls = [],
+                arrFieldsID = [];
             delete formuls['login'];
             for(formul in formuls){
                 var arrFormul = self.parseFormul(formuls[formul]);
                 for(i=0; i<arrFormul.length; i++){
                     if(arrFormul[i].length > 1){
                         arrFormul[i] = self.convertFieldName(arrFormul[i]);
+                        arrFieldsID.push(arrFormul[i]);
                         if(arrFormul[i] == 'lead_card_budget'){
                             arrFormul[i] = $('#'+arrFormul[i]).val().replace(/\s/g, '');
                         }
@@ -192,7 +194,24 @@ define(['jquery'], function($){
                 arrFormul.unshift(self.convertFieldName(formul));
                 arrFormuls.push(arrFormul);
             }
+            self.fieldsAction(arrFieldsID);
             return arrFormuls;
+        };
+
+        //Создает обработчик для полей, которые используются в формуле
+        this.fieldsAction = function (arrFieldsID) {
+            for(i=0; i<arrFieldsID.length; i++){
+                if(arrFieldsID[i] == 'lead_card_budget'){
+                    $('#'+arrFieldsID[i]).on('focusout', function () {
+                        self.calculation(self.convertFormul());
+                    })
+                }
+                else{
+                    $('[name="CFV['+ arrFieldsID[i] +']"]').on('focusout', function () {
+                        self.calculation(self.convertFormul());
+                    })
+                }
+            }
         };
 
         //Конвертировать имя поля на id поля
@@ -290,11 +309,6 @@ define(['jquery'], function($){
 			    console.log('bind_action');
 			    if(self.system().area == 'lcard'){
                     self.calculation(self.convertFormul());
-                    $('.card-entity-form__fields').each(function () {
-                        $(this).find('input').on('focusout', function () {
-                            self.calculation(self.convertFormul());
-                        })
-                    })
                 }
 				return true;
 			},
