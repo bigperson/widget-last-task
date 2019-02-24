@@ -95,7 +95,7 @@ define(['jquery'], function($){
 
                 $('#buttonSaveFormul').on('click', function () {
                     if(self.validateFormul($('#formulField').val(), fieldsNames, $('.control--select--button-inner').text())){
-					    alert('Сохранено');
+					    alert('Формула создана');
                         $('#formulField').css('border', '1px solid rgb(0,255,0)');
 					    self.set_settings($('.control--select--button span').text(), $('#formulField').val())
                     }
@@ -125,8 +125,21 @@ define(['jquery'], function($){
                $(this).find('button').css('background', 'rgb(240,0,0)').css('color', '#fff');
                $(this).find('span').append('Удалить формулу');
                $(this).find('button').on('click', function () {
-                    alert('Удалено');
-                    // self.delete_settings($(this).attr('id').slice(-6))
+                   var mainField = $(this).parent().html(),
+                       codeField = '';
+                   for(i=0; i<mainField.length; i++){
+                       if(mainField[i] != '='){
+                           codeField = codeField + mainField[i]
+                       }
+                       if(mainField[i] == '='){
+                           break;
+                       }
+                   }
+                   console.log(codeField);
+                   if(confirm('Вы уверены, что хотите удалить формулу?')){
+                       self.delete_settings(codeField);
+                       alert('Формула удалена');
+                   }
                 })
             })
         };
@@ -139,8 +152,12 @@ define(['jquery'], function($){
                 for(j=1; j<arrFormuls[i].length; j++){
                     formul = formul + arrFormuls[i][j];
                 }
-                console.log(arrFormuls[i][0]);
-                $('[name="CFV['+ arrFormuls[i][0] +']"]').val(eval(formul));
+                // console.log(formul);
+                try {
+                    $('[name="CFV['+ arrFormuls[i][0] +']"]').val(eval(formul));
+                } catch (err) {
+                    console.log('Заполните поля, учавствующие в формуле')
+                }
             }
         };
 
